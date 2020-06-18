@@ -1,5 +1,5 @@
 class Rental < ApplicationRecord
-  # Validations
+  # Existence
   validates :title, presence: true
   validates :owner, presence: true
   validates :city, presence: true
@@ -7,4 +7,7 @@ class Rental < ApplicationRecord
   validates :image, presence: true
   validates :bedrooms, presence: true
   validates :description, presence: true
+
+  # Uniqueness
+  validates_uniqueness_of :title, scope: [:owner, :city, :category, :bedrooms]
 end
