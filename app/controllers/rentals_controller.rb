@@ -1,4 +1,6 @@
-class RentalsController < JSONAPI::ResourceController
+class RentalsController < ApplicationController
+  # TODO: JSON responses (similar to show); format responses with the correct structure (attributes, type, id, headers, etc.)
+
   def index
   	@rentals = Rental.all
   end
