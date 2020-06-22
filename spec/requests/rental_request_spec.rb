@@ -149,7 +149,7 @@ RSpec.describe "Rentals", type: :request do
   	  expect(response).to have_http_status(:success)
   	  res_hash = JSON.parse(response.body, symbolize_names: true)
   	  # p res_hash.keys.first.class
-  	  expect(res_hash).to eq(expected_res) # TODO: db cleaner (this line will fail if db does not reset before tests)
+  	  expect(res_hash).to eq(expected_res)
   	end
   end
 
