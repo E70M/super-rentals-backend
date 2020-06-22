@@ -83,7 +83,7 @@ expected_patch_res = {
     }
 }
 
-RSpec.describe "Rentals", type: :request do
+RSpec.describe "Rentals" do
   describe 'GET #index' do
   	it "returns empty rental list" do
   	  get "/rentals", { headers: api_headers }
