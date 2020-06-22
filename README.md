@@ -1,6 +1,6 @@
 # Super Rentals
 
-This is a backend server written in Ruby on Rails for the Ember.js Super Rentals tuorial. It is designed to receive requests and send responses according to the [JSON API specification](https://jsonapi.org/).
+This is a backend server written in Ruby on Rails for the Ember.js Super Rentals tutorial. It is designed to receive requests and send responses according to the [JSON API specification](https://jsonapi.org/).
 
 * **Ruby version**: 2.6.3p62
 
