@@ -99,8 +99,8 @@ RSpec.describe "Rentals", type: :request do
       get "/rentals", { headers: api_headers }
       expect(response).to have_http_status(:success)
       res_hash = JSON.parse(response.body, symbolize_names: true)
-      # POST new rental, check correct rental has been created
       comp_size = res_hash[:data].count + 1
+      # POST new rental, check correct rental has been created
       post "/rentals", { params: post_data.to_json, headers: api_headers }
       expect(response).to have_http_status(:success)
   	  res_hash = JSON.parse(response.body, symbolize_names: true)
@@ -112,6 +112,12 @@ RSpec.describe "Rentals", type: :request do
   	  expect(res_hash[:data].count).to eq(comp_size)
     end
     it "does not create duplicate rental" do
+      # Seed data
+      post "/rentals", { params: post_data.to_json, headers: api_headers }
+      expect(response).to have_http_status(:success)
+  	  res_hash = JSON.parse(response.body, symbolize_names: true)
+  	  expect(res_hash).to eq(expected_res)
+      # POST same rental - expected to return error
       post "/rentals", { params: post_data.to_json, headers: api_headers }
       expect(response).not_to have_http_status(:success)
   	  res_hash = JSON.parse(response.body, symbolize_names: true)
@@ -127,6 +133,11 @@ RSpec.describe "Rentals", type: :request do
 
   describe 'GET #show' do
   	it "returns rental" do
+  	  # Seed data
+  	  post "/rentals", { params: post_data.to_json, headers: api_headers }
+      expect(response).to have_http_status(:success)
+  	  res_hash = JSON.parse(response.body, symbolize_names: true)
+  	  expect(res_hash).to eq(expected_res)
   	  # GET all available rentals, select top record for unit id
   	  get "/rentals", { headers: api_headers }
       expect(response).to have_http_status(:success)
@@ -144,6 +155,11 @@ RSpec.describe "Rentals", type: :request do
 
   describe 'PATCH #update' do
   	it "updates rental" do
+  	  # Seed data
+  	  post "/rentals", { params: post_data.to_json, headers: api_headers }
+      expect(response).to have_http_status(:success)
+  	  res_hash = JSON.parse(response.body, symbolize_names: true)
+  	  expect(res_hash).to eq(expected_res)
   	  # GET all available rentals, select top record for unit id
       get "/rentals", { headers: api_headers }
       expect(response).to have_http_status(:success)
@@ -160,6 +176,11 @@ RSpec.describe "Rentals", type: :request do
 
   describe 'DELETE #destroy' do
     it "deletes rental" do
+      # Seed data
+      post "/rentals", { params: post_data.to_json, headers: api_headers }
+      expect(response).to have_http_status(:success)
+  	  res_hash = JSON.parse(response.body, symbolize_names: true)
+  	  expect(res_hash).to eq(expected_res)
       # GET all available rentals, select top record for unit id
       get "/rentals"
       expect(response).to have_http_status(:success)
