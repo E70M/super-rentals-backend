@@ -85,7 +85,6 @@ RSpec.describe "Rentals", type: :request do
       get "/rentals", { headers: api_headers }
       expect(response).to have_http_status(:success)
       res_hash = JSON.parse(response.body, symbolize_names: true)
-      puts res_hash
       # POST new rental, check correct rental has been created
       comp_size = res_hash[:data].count + 1
       post "/rentals", { params: post_data.to_json, headers: api_headers }
