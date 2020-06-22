@@ -90,7 +90,6 @@ RSpec.describe "Rentals", type: :request do
       expect(response).to have_http_status(:success)
   	  res_hash = JSON.parse(response.body, symbolize_names: true)
   	  unit_id = res_hash[:data][0][:id]
-  	  puts unit_id
   	  get_path = "/rentals/" + unit_id
   	  # GET rental with unit id
       get get_path, { headers: api_headers }
@@ -108,23 +107,19 @@ RSpec.describe "Rentals", type: :request do
       expect(response).to have_http_status(:success)
   	  res_hash = JSON.parse(response.body, symbolize_names: true)
   	  unit_id = res_hash[:data][0][:id]
-  	  puts unit_id # Debug
   	  comp_size = res_hash[:data].count - 1
   	  del_path = "/rentals/" + unit_id
-  	  puts del_path # Debug
   	  # DELETE rental with unit id
       delete del_path, { headers: api_headers }
       expect(response).to have_http_status(:success)
   	  # GET all available rentals, check collection size has decreased by 1
-  	  # get "/rentals", { headers: api_headers }
-  	  # expect(response).to have_http_status(:success)
-  	  # puts res_hash # Debug
-  	  # expect(res_hash[:data].count).to eq(comp_size)
+  	  get "/rentals", { headers: api_headers }
+  	  expect(response).to have_http_status(:success)
+  	  res_hash = JSON.parse(response.body, symbolize_names: true)
+  	  expect(res_hash[:data].count).to eq(comp_size)
   	  # GET rental with unit id, check it has been deleted
-  	  # get del_path, { headers: api_headers }
-  	  # expect(response).to have_http_status(:success)
-  	  # res_hash = JSON.parse(response.body, symbolize_names: true)
-  	  # puts res_hash
+  	  get del_path, { headers: api_headers }
+  	  expect(response).to have_http_status(:missing)
     end
   end
 end
