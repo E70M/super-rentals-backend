@@ -21,6 +21,20 @@ post_data = {
   	}
 }
 
+incomplete_post_data = {
+	"data": {
+    	"type": "rentals",
+    	"attributes": {
+      		"title": "Grand Old Mansion",
+      		"owner": "Veruca Salt",
+      		"category": "Estate",
+      		"image": "https://upload.wikimedia.org/wikipedia/commons/c/cb/Crane_estate_(5).jpg",
+      		"bedrooms": 15,
+      		"description": "This grand old mansion sits on over 100 acres of rolling hills and dense redwood forests."
+    	}
+  	}
+}
+
 patch_data = {
  	"data": {
     	"type": "rentals",
@@ -102,6 +116,12 @@ RSpec.describe "Rentals", type: :request do
       expect(response).not_to have_http_status(:success)
   	  res_hash = JSON.parse(response.body, symbolize_names: true)
   	  expect(res_hash[:errors][0][:title]).to eq("has already been taken")
+    end
+    it "does not create rental with missing information" do
+      post "/rentals", { params: incomplete_post_data.to_json, headers: api_headers }
+      expect(response).not_to have_http_status(:success)
+  	  res_hash = JSON.parse(response.body, symbolize_names: true)
+  	  expect(res_hash[:errors][0][:title]).to eq("can't be blank")
     end
   end
 
