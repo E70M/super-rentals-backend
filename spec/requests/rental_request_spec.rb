@@ -3,22 +3,32 @@ require 'json'
 require 'database_cleaner/active_record'
 
 api_headers = {
-  "Content-Type" => "application/vnd.api+json"
+ 	"Content-Type" => "application/vnd.api+json"
 }
 
 post_data = {
-  "data": {
-    "type": "rentals",
-    "attributes": {
-      "title": "Grand Old Mansion",
-      "owner": "Veruca Salt",
-      "city": "San Francisco",
-      "category": "Estate",
-      "image": "https://upload.wikimedia.org/wikipedia/commons/c/cb/Crane_estate_(5).jpg",
-      "bedrooms": 15,
-      "description": "This grand old mansion sits on over 100 acres of rolling hills and dense redwood forests."
-    }
-  }
+	"data": {
+    	"type": "rentals",
+    	"attributes": {
+      		"title": "Grand Old Mansion",
+      		"owner": "Veruca Salt",
+      		"city": "San Francisco",
+      		"category": "Estate",
+      		"image": "https://upload.wikimedia.org/wikipedia/commons/c/cb/Crane_estate_(5).jpg",
+      		"bedrooms": 15,
+      		"description": "This grand old mansion sits on over 100 acres of rolling hills and dense redwood forests."
+    	}
+  	}
+}
+
+patch_data = {
+ 	"data": {
+    	"type": "rentals",
+    	"id": 1,
+    	"attributes": {
+      		"city": "San Diego"
+    	}
+  	}
 }
 
 expected_res = {
@@ -100,6 +110,22 @@ RSpec.describe "Rentals", type: :request do
   	end
   end
 
+  describe 'PATCH #update' do
+  	it "updates rental" do
+  	  # GET all available rentals, select top record for unit id
+      get "/rentals", { headers: api_headers }
+      expect(response).to have_http_status(:success)
+  	  res_hash = JSON.parse(response.body, symbolize_names: true)
+  	  unit_id = res_hash[:data][0][:id]
+  	  # PATCH rental with unit id, change city name
+  	  patch_path = "/rentals/" + unit_id
+  	  patch patch_path, { params: patch_data.to_json, headers: api_headers }
+  	  expect(response).to have_http_status(:success)
+  	  res_hash = JSON.parse(response.body, symbolize_names: true)
+  	  expect(res_hash).to eq(expected_patch_res)
+  	end
+  end
+
   describe 'DELETE #destroy' do
     it "deletes rental" do
       # GET all available rentals, select top record for unit id
@@ -107,9 +133,9 @@ RSpec.describe "Rentals", type: :request do
       expect(response).to have_http_status(:success)
   	  res_hash = JSON.parse(response.body, symbolize_names: true)
   	  unit_id = res_hash[:data][0][:id]
+  	  # DELETE rental with unit id
   	  comp_size = res_hash[:data].count - 1
   	  del_path = "/rentals/" + unit_id
-  	  # DELETE rental with unit id
       delete del_path, { headers: api_headers }
       expect(response).to have_http_status(:success)
   	  # GET all available rentals, check collection size has decreased by 1
