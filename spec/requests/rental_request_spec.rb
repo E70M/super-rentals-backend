@@ -21,7 +21,7 @@ expected_res = {
         "id": "1",
         "type": "rentals",
         "links": {
-            "self": "http://localhost:3000/rentals/1"
+            "self": "http://www.example.com/rentals/1"
         },
         "attributes": {
             "title": "Grand Old Mansion",
@@ -47,11 +47,14 @@ RSpec.describe "Rentals", type: :request do
   describe '#show' do
   	it "returns Grand Old Mansion rental" do
       api_headers = { "Content-Type" => "application/vnd.api+json" }
-      post "/rentals", { params: post_data, headers: api_headers }
-      # expect(JSON.parse(response.body)["data"]["attributes"]).to eq(expected_res["data"]["attributes"])
-      get "/rentals/1"
+      # POST rental record
+      post "/rentals", { params: post_data.to_json, headers: api_headers }
+      puts response.body
+      # GET rental record from db
+      get "/rentals/1", { headers: api_headers }
   	  expect(response).to have_http_status(200)
-  	  # expect(JSON.parse(response.body)["title"]).to eq("Grand Old Mansion")
+  	  res_hash = JSON.parse(response.body, symbolize_names: true)
+  	  puts expect(res_hash).to eq(expected_res)
   	end
   end
 end
