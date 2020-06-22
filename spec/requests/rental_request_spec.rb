@@ -81,9 +81,22 @@ RSpec.describe "Rentals", type: :request do
 
   describe 'POST #create' do
     it "creates rental" do
+      # GET all available rentals, find collection size
+      get "/rentals", { headers: api_headers }
+      expect(response).to have_http_status(:success)
+      res_hash = JSON.parse(response.body, symbolize_names: true)
+      puts res_hash
+      # POST new rental, check correct rental has been created
+      comp_size = res_hash[:data].count + 1
       post "/rentals", { params: post_data.to_json, headers: api_headers }
       expect(response).to have_http_status(:success)
   	  res_hash = JSON.parse(response.body, symbolize_names: true)
+  	  expect(res_hash).to eq(expected_res)
+  	  # GET all available rentals, check collection size has increased by 1
+  	  get "/rentals", { headers: api_headers }
+  	  expect(response).to have_http_status(:success)
+  	  res_hash = JSON.parse(response.body, symbolize_names: true)
+  	  expect(res_hash[:data].count).to eq(comp_size)
     end
     it "does not create duplicate rental" do
       post "/rentals", { params: post_data.to_json, headers: api_headers }
