@@ -4,81 +4,22 @@ api_headers = {
  	"Content-Type" => "application/vnd.api+json"
 }
 
+# Faker data is inserted via FactoryBot
 post_data = {
 	"data": {
     	"type": "rentals",
-    	"attributes": {
-      		"title": "Grand Old Mansion",
-      		"owner": "Veruca Salt",
-      		"city": "San Francisco",
-      		"category": "Estate",
-      		"image": "https://upload.wikimedia.org/wikipedia/commons/c/cb/Crane_estate_(5).jpg",
-      		"bedrooms": 15,
-      		"description": "This grand old mansion sits on over 100 acres of rolling hills and dense redwood forests."
-    	}
-  	}
-}
-
-incomplete_post_data = {
-	"data": {
-    	"type": "rentals",
-    	"attributes": {
-      		"title": "Grand Old Mansion",
-      		"owner": "Veruca Salt",
-      		"category": "Estate",
-      		"image": "https://upload.wikimedia.org/wikipedia/commons/c/cb/Crane_estate_(5).jpg",
-      		"bedrooms": 15,
-      		"description": "This grand old mansion sits on over 100 acres of rolling hills and dense redwood forests."
-    	}
+    	"attributes": {}
   	}
 }
 
 patch_data = {
  	"data": {
+      "id": nil,
     	"type": "rentals",
-    	"id": 1,
     	"attributes": {
-      		"city": "San Diego"
+      		"city": ""
     	}
   	}
-}
-
-expected_res = {
-    "data": {
-        "id": "1",
-        "type": "rentals",
-        "links": {
-            "self": "http://www.example.com/rentals/1"
-        },
-        "attributes": {
-            "title": "Grand Old Mansion",
-            "owner": "Veruca Salt",
-            "city": "San Francisco",
-            "category": "Estate",
-            "image": "https://upload.wikimedia.org/wikipedia/commons/c/cb/Crane_estate_(5).jpg",
-            "bedrooms": 15,
-            "description": "This grand old mansion sits on over 100 acres of rolling hills and dense redwood forests."
-        }
-    }
-}
-
-expected_patch_res = {
-    "data": {
-        "id": "1",
-        "type": "rentals",
-        "links": {
-            "self": "http://www.example.com/rentals/1"
-        },
-        "attributes": {
-            "title": "Grand Old Mansion",
-            "owner": "Veruca Salt",
-            "city": "San Diego",
-            "category": "Estate",
-            "image": "https://upload.wikimedia.org/wikipedia/commons/c/cb/Crane_estate_(5).jpg",
-            "bedrooms": 15,
-            "description": "This grand old mansion sits on over 100 acres of rolling hills and dense redwood forests."
-        }
-    }
 }
 
 RSpec.describe "Rentals" do
@@ -92,34 +33,44 @@ RSpec.describe "Rentals" do
 
   describe 'POST #create' do
     it "creates rental" do
-      post "/rentals", { params: post_data.to_json, headers: api_headers }
-  	  res_hash = JSON.parse(response.body, symbolize_names: true)
-  	  expect(res_hash).to eq(expected_res)
-      # rental = FactoryBot.build(:rental)
-      # puts attributes_for(:rental)
+      # Seed req data
+      rental = FactoryBot.build(:rental)
+      req = post_data.deep_dup
+      req[:data][:attributes] = attributes_for(:rental)
+      # POST new rental
+      post "/rentals", { params: req.to_json, headers: api_headers }
+      expect(response).to have_http_status(:success)
     end
     it "increases rental count by 1" do
       # GET all available rentals, find count
       get "/rentals", { headers: api_headers }
       res_hash = JSON.parse(response.body, symbolize_names: true)
       comp_size = res_hash[:data].count + 1
-      # POST new rental, check correct rental has been created
-      post "/rentals", { params: post_data.to_json, headers: api_headers }
+      # Seed req data
+      rental = FactoryBot.build(:rental)
+      req = post_data.deep_dup
+      req[:data][:attributes] = attributes_for(:rental)
+      # POST new rental
+      post "/rentals", { params: req.to_json, headers: api_headers }
       # GET all available rentals, check count has increased by 1
       get "/rentals", { headers: api_headers }
       res_hash = JSON.parse(response.body, symbolize_names: true)
       expect(res_hash[:data].count).to eq(comp_size)
     end
     it "does not create duplicate rental" do
-      # Seed data
-      post "/rentals", { params: post_data.to_json, headers: api_headers }
+      # Seed req data
+      rental = FactoryBot.build(:rental)
+      req = post_data.deep_dup
+      req[:data][:attributes] = attributes_for(:rental)
+      # POST rental
+      post "/rentals", { params: req.to_json, headers: api_headers }
       # POST same rental - expected to return error
-      post "/rentals", { params: post_data.to_json, headers: api_headers }
+      post "/rentals", { params: req.to_json, headers: api_headers }
   	  res_hash = JSON.parse(response.body, symbolize_names: true)
   	  expect(res_hash[:errors][0][:title]).to eq("has already been taken")
     end
     it "does not create rental with missing information" do
-      post "/rentals", { params: incomplete_post_data.to_json, headers: api_headers }
+      post "/rentals", { params: post_data.to_json, headers: api_headers }
   	  res_hash = JSON.parse(response.body, symbolize_names: true)
   	  expect(res_hash[:errors][0][:title]).to eq("can't be blank")
     end
@@ -127,8 +78,12 @@ RSpec.describe "Rentals" do
 
   describe 'GET #show' do
   	it "returns rental" do
-  	  # Seed data
-  	  post "/rentals", { params: post_data.to_json, headers: api_headers }
+      # Seed req data
+  	  rental = FactoryBot.build(:rental)
+      req = post_data.deep_dup
+      req[:data][:attributes] = attributes_for(:rental)
+      # POST rental
+  	  post "/rentals", { params: req.to_json, headers: api_headers }
   	  # GET all available rentals, select top record for unit id
   	  get "/rentals", { headers: api_headers }
   	  res_hash = JSON.parse(response.body, symbolize_names: true)
@@ -136,32 +91,43 @@ RSpec.describe "Rentals" do
   	  get_path = "/rentals/" + unit_id
   	  # GET rental with unit id
       get get_path, { headers: api_headers }
-  	  res_hash = JSON.parse(response.body, symbolize_names: true)
-  	  expect(res_hash).to eq(expected_res)
+  	  expect(response).to have_http_status(:success)
   	end
   end
 
   describe 'PATCH #update' do
     before {
-      post "/rentals", { params: post_data.to_json, headers: api_headers }
+      # Seed req data
+      rental = FactoryBot.build(:rental)
+      req = post_data.deep_dup
+      req[:data][:attributes] = attributes_for(:rental)
+      post "/rentals", { params: req.to_json, headers: api_headers }
       get "/rentals", { headers: api_headers }
     }
   	it "updates rental" do
   	  res_hash = JSON.parse(response.body, symbolize_names: true)
   	  unit_id = res_hash[:data][0][:id]
+      # Seed req data
+      req = patch_data.deep_dup
+      req[:data][:id] = unit_id
+      req[:data][:attributes][:city] = Faker::Address.city
   	  # PATCH rental with unit id, change city name
   	  patch_path = "/rentals/" + unit_id
-  	  patch patch_path, { params: patch_data.to_json, headers: api_headers }
+  	  patch patch_path, { params: req.to_json, headers: api_headers }
   	  res_hash = JSON.parse(response.body, symbolize_names: true)
-  	  expect(res_hash).to eq(expected_patch_res)
+      expect(response).to have_http_status(:success)
   	end
     it "does not change rental count" do
       res_hash = JSON.parse(response.body, symbolize_names: true)
       unit_id = res_hash[:data][0][:id]
       comp_size = res_hash[:data].count
+      # Seed req data
+      req = patch_data.deep_dup
+      req[:data][:id] = unit_id
+      req[:data][:attributes][:city] = Faker::Address.city
       # PATCH rental with unit id, change city name
       patch_path = "/rentals/" + unit_id
-      patch patch_path, { params: patch_data.to_json, headers: api_headers }
+      patch patch_path, { params: req.to_json, headers: api_headers }
       # GET all available rentals, check count has not changed
       get "/rentals", { headers: api_headers }
       res_hash = JSON.parse(response.body, symbolize_names: true)
@@ -171,7 +137,11 @@ RSpec.describe "Rentals" do
 
   describe 'DELETE #destroy' do
     before {
-      post "/rentals", { params: post_data.to_json, headers: api_headers }
+      # Seed req data
+      rental = FactoryBot.build(:rental)
+      req = post_data.deep_dup
+      req[:data][:attributes] = attributes_for(:rental)
+      post "/rentals", { params: req.to_json, headers: api_headers }
       get "/rentals", { headers: api_headers }
     }
     it "deletes rental" do
