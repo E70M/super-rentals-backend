@@ -87,7 +87,6 @@ RSpec.describe "Rentals" do
   describe 'GET #index' do
   	it "returns empty rental list" do
   	  get "/rentals", { headers: api_headers }
-  	  expect(response).to have_http_status(:success)
   	  res_hash = JSON.parse(response.body, symbolize_names: true)
   	  expect(res_hash[:data].count).to eq(0)
   	end
@@ -95,37 +94,32 @@ RSpec.describe "Rentals" do
 
   describe 'POST #create' do
     it "creates rental" do
-      # GET all available rentals, find collection size
+      post "/rentals", { params: post_data.to_json, headers: api_headers }
+  	  res_hash = JSON.parse(response.body, symbolize_names: true)
+  	  expect(res_hash).to eq(expected_res)
+    end
+    it "increases rental count by 1" do
+      # GET all available rentals, find count
       get "/rentals", { headers: api_headers }
-      expect(response).to have_http_status(:success)
       res_hash = JSON.parse(response.body, symbolize_names: true)
       comp_size = res_hash[:data].count + 1
       # POST new rental, check correct rental has been created
       post "/rentals", { params: post_data.to_json, headers: api_headers }
-      expect(response).to have_http_status(:success)
-  	  res_hash = JSON.parse(response.body, symbolize_names: true)
-  	  expect(res_hash).to eq(expected_res)
-  	  # GET all available rentals, check collection size has increased by 1
-  	  get "/rentals", { headers: api_headers }
-  	  expect(response).to have_http_status(:success)
-  	  res_hash = JSON.parse(response.body, symbolize_names: true)
-  	  expect(res_hash[:data].count).to eq(comp_size)
+      # GET all available rentals, check count has increased by 1
+      get "/rentals", { headers: api_headers }
+      res_hash = JSON.parse(response.body, symbolize_names: true)
+      expect(res_hash[:data].count).to eq(comp_size)
     end
     it "does not create duplicate rental" do
       # Seed data
       post "/rentals", { params: post_data.to_json, headers: api_headers }
-      expect(response).to have_http_status(:success)
-  	  res_hash = JSON.parse(response.body, symbolize_names: true)
-  	  expect(res_hash).to eq(expected_res)
       # POST same rental - expected to return error
       post "/rentals", { params: post_data.to_json, headers: api_headers }
-      expect(response).not_to have_http_status(:success)
   	  res_hash = JSON.parse(response.body, symbolize_names: true)
   	  expect(res_hash[:errors][0][:title]).to eq("has already been taken")
     end
     it "does not create rental with missing information" do
       post "/rentals", { params: incomplete_post_data.to_json, headers: api_headers }
-      expect(response).not_to have_http_status(:success)
   	  res_hash = JSON.parse(response.body, symbolize_names: true)
   	  expect(res_hash[:errors][0][:title]).to eq("can't be blank")
     end
@@ -135,20 +129,14 @@ RSpec.describe "Rentals" do
   	it "returns rental" do
   	  # Seed data
   	  post "/rentals", { params: post_data.to_json, headers: api_headers }
-      expect(response).to have_http_status(:success)
-  	  res_hash = JSON.parse(response.body, symbolize_names: true)
-  	  expect(res_hash).to eq(expected_res)
   	  # GET all available rentals, select top record for unit id
   	  get "/rentals", { headers: api_headers }
-      expect(response).to have_http_status(:success)
   	  res_hash = JSON.parse(response.body, symbolize_names: true)
   	  unit_id = res_hash[:data][0][:id]
   	  get_path = "/rentals/" + unit_id
   	  # GET rental with unit id
       get get_path, { headers: api_headers }
-  	  expect(response).to have_http_status(:success)
   	  res_hash = JSON.parse(response.body, symbolize_names: true)
-  	  # p res_hash.keys.first.class
   	  expect(res_hash).to eq(expected_res)
   	end
   end
@@ -157,48 +145,79 @@ RSpec.describe "Rentals" do
   	it "updates rental" do
   	  # Seed data
   	  post "/rentals", { params: post_data.to_json, headers: api_headers }
-      expect(response).to have_http_status(:success)
-  	  res_hash = JSON.parse(response.body, symbolize_names: true)
-  	  expect(res_hash).to eq(expected_res)
   	  # GET all available rentals, select top record for unit id
       get "/rentals", { headers: api_headers }
-      expect(response).to have_http_status(:success)
   	  res_hash = JSON.parse(response.body, symbolize_names: true)
   	  unit_id = res_hash[:data][0][:id]
   	  # PATCH rental with unit id, change city name
   	  patch_path = "/rentals/" + unit_id
   	  patch patch_path, { params: patch_data.to_json, headers: api_headers }
-  	  expect(response).to have_http_status(:success)
   	  res_hash = JSON.parse(response.body, symbolize_names: true)
   	  expect(res_hash).to eq(expected_patch_res)
   	end
+    it "does not change rental count" do
+      # Seed data
+      post "/rentals", { params: post_data.to_json, headers: api_headers }
+      # GET all available rentals, select top record for unit id, find original count
+      get "/rentals", { headers: api_headers }
+      res_hash = JSON.parse(response.body, symbolize_names: true)
+      unit_id = res_hash[:data][0][:id]
+      comp_size = res_hash[:data].count
+      # PATCH rental with unit id, change city name
+      patch_path = "/rentals/" + unit_id
+      patch patch_path, { params: patch_data.to_json, headers: api_headers }
+      # GET all available rentals, check count has not changed
+      get "/rentals", { headers: api_headers }
+      res_hash = JSON.parse(response.body, symbolize_names: true)
+      expect(res_hash[:data].count).to eq(comp_size)
+    end
   end
 
   describe 'DELETE #destroy' do
     it "deletes rental" do
       # Seed data
       post "/rentals", { params: post_data.to_json, headers: api_headers }
-      expect(response).to have_http_status(:success)
-  	  res_hash = JSON.parse(response.body, symbolize_names: true)
-  	  expect(res_hash).to eq(expected_res)
       # GET all available rentals, select top record for unit id
-      get "/rentals"
-      expect(response).to have_http_status(:success)
+      get "/rentals", { headers: api_headers }
   	  res_hash = JSON.parse(response.body, symbolize_names: true)
   	  unit_id = res_hash[:data][0][:id]
   	  # DELETE rental with unit id
-  	  comp_size = res_hash[:data].count - 1
   	  del_path = "/rentals/" + unit_id
       delete del_path, { headers: api_headers }
-      expect(response).to have_http_status(:success)
-  	  # GET all available rentals, check collection size has decreased by 1
-  	  get "/rentals", { headers: api_headers }
-  	  expect(response).to have_http_status(:success)
-  	  res_hash = JSON.parse(response.body, symbolize_names: true)
-  	  expect(res_hash[:data].count).to eq(comp_size)
   	  # GET rental with unit id, check it has been deleted
   	  get del_path, { headers: api_headers }
   	  expect(response).to have_http_status(:missing)
+    end
+    it "decreases rental count by 1" do
+      # Seed data
+      post "/rentals", { params: post_data.to_json, headers: api_headers }
+      # GET all available rentals, select top record for unit id, get count
+      get "/rentals", { headers: api_headers }
+      res_hash = JSON.parse(response.body, symbolize_names: true)
+      unit_id = res_hash[:data][0][:id]
+      comp_size = res_hash[:data].count - 1
+      # DELETE rental with unit id
+      del_path = "/rentals/" + unit_id
+      delete del_path, { headers: api_headers }
+      # GET all available rentals, check collection size has decreased by 1
+      get "/rentals", { headers: api_headers }
+      res_hash = JSON.parse(response.body, symbolize_names: true)
+      expect(res_hash[:data].count).to eq(comp_size)
+    end
+    it "does not delete a non-existent record" do
+      # Seed data
+      post "/rentals", { params: post_data.to_json, headers: api_headers }
+      # GET all available rentals, select top record for unit id
+      get "/rentals", { headers: api_headers }
+      res_hash = JSON.parse(response.body, symbolize_names: true)
+      unit_id = res_hash[:data][0][:id]
+      # DELETE rental with unit id
+      del_path = "/rentals/" + unit_id
+      delete del_path, { headers: api_headers }
+      # DELETE same rental - expect to return error
+      delete del_path, { headers: api_headers }
+      res_hash = JSON.parse(response.body, symbolize_names: true)
+      expect(res_hash[:errors][0][:title]).to eq("Record not found")
     end
   end
 end
