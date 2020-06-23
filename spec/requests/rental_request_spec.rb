@@ -84,8 +84,7 @@ expected_patch_res = {
 RSpec.describe "Rentals" do
   describe 'GET #index' do
   	it "returns empty rental list" do
-  	  # get "/rentals", { headers: api_headers }
-      jsonapi_get("/rentals", { headers: api_headers })
+  	  get "/rentals", { headers: api_headers }
   	  res_hash = JSON.parse(response.body, symbolize_names: true)
   	  expect(res_hash[:data].count).to eq(0)
   	end
