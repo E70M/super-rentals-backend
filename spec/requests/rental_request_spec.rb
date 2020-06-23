@@ -1,6 +1,4 @@
 require 'rails_helper'
-require 'json'
-require 'database_cleaner/active_record'
 
 api_headers = {
  	"Content-Type" => "application/vnd.api+json"
@@ -142,11 +140,11 @@ RSpec.describe "Rentals" do
   end
 
   describe 'PATCH #update' do
-  	it "updates rental" do
-  	  # Seed data
-  	  post "/rentals", { params: post_data.to_json, headers: api_headers }
-  	  # GET all available rentals, select top record for unit id
+    before {
+      post "/rentals", { params: post_data.to_json, headers: api_headers }
       get "/rentals", { headers: api_headers }
+    }
+  	it "updates rental" do
   	  res_hash = JSON.parse(response.body, symbolize_names: true)
   	  unit_id = res_hash[:data][0][:id]
   	  # PATCH rental with unit id, change city name
@@ -156,10 +154,6 @@ RSpec.describe "Rentals" do
   	  expect(res_hash).to eq(expected_patch_res)
   	end
     it "does not change rental count" do
-      # Seed data
-      post "/rentals", { params: post_data.to_json, headers: api_headers }
-      # GET all available rentals, select top record for unit id, find original count
-      get "/rentals", { headers: api_headers }
       res_hash = JSON.parse(response.body, symbolize_names: true)
       unit_id = res_hash[:data][0][:id]
       comp_size = res_hash[:data].count
@@ -174,14 +168,13 @@ RSpec.describe "Rentals" do
   end
 
   describe 'DELETE #destroy' do
-    it "deletes rental" do
-      # Seed data
+    before {
       post "/rentals", { params: post_data.to_json, headers: api_headers }
-      # GET all available rentals, select top record for unit id
       get "/rentals", { headers: api_headers }
-  	  res_hash = JSON.parse(response.body, symbolize_names: true)
-  	  unit_id = res_hash[:data][0][:id]
-  	  # DELETE rental with unit id
+    }
+    it "deletes rental" do
+      res_hash = JSON.parse(response.body, symbolize_names: true)
+      unit_id = res_hash[:data][0][:id]
   	  del_path = "/rentals/" + unit_id
       delete del_path, { headers: api_headers }
   	  # GET rental with unit id, check it has been deleted
@@ -189,14 +182,9 @@ RSpec.describe "Rentals" do
   	  expect(response).to have_http_status(:missing)
     end
     it "decreases rental count by 1" do
-      # Seed data
-      post "/rentals", { params: post_data.to_json, headers: api_headers }
-      # GET all available rentals, select top record for unit id, get count
-      get "/rentals", { headers: api_headers }
       res_hash = JSON.parse(response.body, symbolize_names: true)
       unit_id = res_hash[:data][0][:id]
       comp_size = res_hash[:data].count - 1
-      # DELETE rental with unit id
       del_path = "/rentals/" + unit_id
       delete del_path, { headers: api_headers }
       # GET all available rentals, check collection size has decreased by 1
@@ -205,13 +193,8 @@ RSpec.describe "Rentals" do
       expect(res_hash[:data].count).to eq(comp_size)
     end
     it "does not delete a non-existent record" do
-      # Seed data
-      post "/rentals", { params: post_data.to_json, headers: api_headers }
-      # GET all available rentals, select top record for unit id
-      get "/rentals", { headers: api_headers }
       res_hash = JSON.parse(response.body, symbolize_names: true)
       unit_id = res_hash[:data][0][:id]
-      # DELETE rental with unit id
       del_path = "/rentals/" + unit_id
       delete del_path, { headers: api_headers }
       # DELETE same rental - expect to return error
