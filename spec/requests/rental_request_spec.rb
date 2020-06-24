@@ -38,30 +38,22 @@ RSpec.describe "Rentals" do
       res_hash = JSON.parse(response.body, symbolize_names: true)
       expect(res_hash[:data].count).to eq(comp_size)
     end
-    # it "does not create duplicate rental" do
-    #   # GET all available rentals, find count
-    #   get "/rentals", { headers: api_headers }
-    #   res_hash = JSON.parse(response.body, symbolize_names: true)
-    #   comp_size = res_hash[:data].count + 1
-    #   create_list(:rental, 2)
-    #   # GET all available rentals, check count has only increased by 1
-    #   get "/rentals", { headers: api_headers }
-    #   res_hash = JSON.parse(response.body, symbolize_names: true)
-    #   puts res_hash
-    #   expect(res_hash[:data].count).to eq(comp_size)
-    # end
-    # it "does not create rental with missing information" do
-    #   # GET all available rentals, find count
-    #   get "/rentals", { headers: api_headers }
-    #   res_hash = JSON.parse(response.body, symbolize_names: true)
-    #   comp_size = res_hash[:data].count
-    #   create(:rental, title: "")
-    #   puts response
-    #   GET all available rentals, check count has not increased
-    #   get "/rentals", { headers: api_headers }
-    #   res_hash = JSON.parse(response.body, symbolize_names: true)
-    #   expect(res_hash[:data].count).to eq(comp_size)
-    # end
+    it "does not create duplicate rental" do
+      # GET all available rentals, find count
+      get "/rentals", { headers: api_headers }
+      res_hash = JSON.parse(response.body, symbolize_names: true)
+      comp_size = res_hash[:data].count + 1
+      # POST same rental twice 
+      rental = create(:rental)
+      rental.save
+      # GET all available rentals, check count has only increased by 1
+      get "/rentals", { headers: api_headers }
+      res_hash = JSON.parse(response.body, symbolize_names: true)
+      expect(res_hash[:data].count).to eq(comp_size)
+    end
+    it "does not create rental with missing information" do
+      expect{create(:rental, title: "")}.to raise_error(ActiveRecord::RecordInvalid)
+    end
   end
 
   describe 'GET #show' do
