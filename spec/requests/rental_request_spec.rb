@@ -45,7 +45,7 @@ RSpec.describe "Rentals" do
       comp_size = res_hash[:data].count + 1
       # POST same rental twice 
       rental = create(:rental)
-      rental.save
+      same_rental = create(:rental, title: rental.title)
       # GET all available rentals, check count has only increased by 1
       get "/rentals", { headers: api_headers }
       res_hash = JSON.parse(response.body, symbolize_names: true)
