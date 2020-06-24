@@ -45,11 +45,8 @@ RSpec.describe "Rentals" do
       comp_size = res_hash[:data].count + 1
       # POST same rental twice 
       rental = create(:rental)
-      same_rental = create(:rental, title: rental.title)
-      # GET all available rentals, check count has only increased by 1
-      get "/rentals", { headers: api_headers }
-      res_hash = JSON.parse(response.body, symbolize_names: true)
-      expect(res_hash[:data].count).to eq(comp_size)
+      expect{create(:rental, title: rental.title, owner: rental.owner, city: rental.city,
+        category: rental.category, bedrooms: rental.bedrooms)}.to raise_error(ActiveRecord::RecordInvalid)
     end
     it "does not create rental with missing information" do
       expect{create(:rental, title: "")}.to raise_error(ActiveRecord::RecordInvalid)
