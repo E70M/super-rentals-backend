@@ -41,7 +41,7 @@ RSpec.describe "Rentals" do
 
   describe 'GET #show' do
     let!(:rental) { create(:rental) }
-    
+
     it "returns rental" do
       get "/rentals/#{rental.id}", { headers: api_headers }
       expect(response).to have_http_status(:success)
@@ -61,7 +61,6 @@ RSpec.describe "Rentals" do
         }
       }
     end
-    before { get "/rentals", { headers: api_headers } }
 
     it "updates rental" do
       patch "/rentals/#{rental.id}", { params: params.to_json, headers: api_headers }
@@ -71,15 +70,10 @@ RSpec.describe "Rentals" do
     end
 
     it "does not change rental count" do
-      res_hash = JSON.parse(response.body, symbolize_names: true)
-      comp_size = res_hash[:data].count
-      # PATCH rental with unit id, change city name
-      patch "/rentals/#{rental.id}", { params: params.to_json, headers: api_headers }
-      # GET all available rentals, check count has not changed
-      get "/rentals", { headers: api_headers }
-      res_hash = JSON.parse(response.body, symbolize_names: true)
+      expect do
+        patch "/rentals/#{rental.id}", { params: params.to_json, headers: api_headers }
+      end.to change{ Rental.count }.by(0)
       expect(response).to have_http_status(:success)
-      expect(res_hash[:data].count).to eq(comp_size)
     end
   end
 
